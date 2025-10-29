@@ -1,0 +1,18 @@
+# 테스트 환경을 위한 설정 파일
+spring:
+  # 데이터베이스 설정을 인메모리 H2로 지정하여 외부 DB 없이 테스트
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # JPA 설정을 H2에 맞게 변경
+  jpa:
+    hibernate:
+      ddl-auto: create-drop # 테스트 시작 시 테이블 생성, 종료 시 삭제
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+jwt:
+  secret: "test-secret-key-that-is-long-enough-for-testing-12345"
