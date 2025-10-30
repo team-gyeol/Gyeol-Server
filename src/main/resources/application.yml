@@ -4,11 +4,14 @@ server:
   port: 8080
 
 spring:
+  config:
+    import: optional:file:.env.properties
   datasource:
     url: jdbc:mysql://gyeoldb.cx08oc6c8i7a.ap-northeast-2.rds.amazonaws.com:3306/gyeol
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: ec2user
     password: ${GYEOL_PASSWORD}
+
 
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
@@ -34,7 +37,7 @@ spring:
             redirect-uri: "{baseUrl}/login/oauth2/code/google"
 
           kakao:
-            client-id: ${KAKAO_CLIENT_SECRET}
+            client-id: ${KAKAO_CLIENT_ID}
             client-secret: ${KAKAO_CLIENT_SECRET}
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
