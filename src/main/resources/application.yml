@@ -14,7 +14,7 @@ spring:
 
 
   jpa:
-    database-platform: org.hibernate.dialect.MySQL8Dialect
+    database-platform: org.hibernate.dialect.MySQLDialect # Deprecated 경고 제거
     open-in-view: false
     show-sql: true
     hibernate:
@@ -35,6 +35,7 @@ spring:
               - email
               - profile
             redirect-uri: "{baseUrl}/login/oauth2/code/google"
+
 
           kakao:
             client-id: ${KAKAO_CLIENT_ID}
