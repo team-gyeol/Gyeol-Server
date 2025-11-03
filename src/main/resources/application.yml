@@ -10,7 +10,12 @@ spring:
     url: jdbc:mysql://gyeoldb.cx08oc6c8i7a.ap-northeast-2.rds.amazonaws.com:3306/gyeol
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: ec2user
-    password: ${GYEOL_PASSWORD}
+    password: ${GYEOL_PASSWORD}'
+  servlet:
+    multipart:
+      max-file-size: 10MB  # 최대 파일 크기
+      max-request-size: 10MB  # 최대 요청 크기
+
 
 
   jpa:
@@ -56,3 +61,22 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET}
+
+fastapi:
+  server:
+    url: http://localhost:8000  # FastAPI 서버 주소 (개발 환경)
+    # url: http://your-fastapi-server.com  # 프로덕션 환경
+
+
+cloud:
+  aws:
+    s3:
+      bucket: gyeol-image-bucket # 본인의 S3 버킷 이름
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    region:
+      static: ap-northeast-2 # 본인의 S3 버킷 리전
+      auto: false
+    stack:
+      auto: false

@@ -28,4 +28,9 @@ public class SegmentedImage {
     @Column(nullable = false)
     private String imageUrl;
 
+    /**
+     * AI 모델이 분석한 결과 문자열 (예: "class 1: 10개, class 2: 5개")
+     */
+    @Column(nullable = false, length = 500) // 길이를 넉넉하게 설정
+    private String analysisResult;
 }

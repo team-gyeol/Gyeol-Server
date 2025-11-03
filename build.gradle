@@ -24,7 +24,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa' // JPA
-    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf' // Template Engine
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     // implementation 'org.springframework.boot:spring-boot-starter-webflux' // for WebClient
     implementation 'org.springframework.boot:spring-boot-starter-validation' // for Bean Validation
 
@@ -47,8 +47,18 @@ dependencies {
     // MinIO Client
     // implementation 'io.minio:minio:8.5.2'
     
+    // AWS S3 SDK
+    implementation 'io.awspring.cloud:spring-cloud-starter-aws:2.4.4'
+
     // Test Dependencies
     testImplementation 'com.h2database:h2' // H2 for in-memory testing
+
+    // WebClient (Spring WebFlux)
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
 }
 
 tasks.named('test') {
