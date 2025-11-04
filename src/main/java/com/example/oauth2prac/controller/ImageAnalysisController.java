@@ -1,5 +1,6 @@
 package com.example.oauth2prac.controller;
 
+import com.example.oauth2prac.config.SecurityUtils;
 import com.example.oauth2prac.dto.SegmentationResponseDTO;
 import com.example.oauth2prac.entity.OriginalImage;
 import com.example.oauth2prac.entity.User;
@@ -28,14 +29,13 @@ public class ImageAnalysisController {
     private final UserRepository userRepository;
     private final OriginalImageRepository originalImageRepository;
 
-    @PostMapping("/analyze")
+    @PostMapping(value = "/analyze", consumes = "multipart/form-data")
     public ResponseEntity<?> analyzeImage(
-            @RequestParam("image") MultipartFile image,
-            @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
+            @RequestPart(value = "image") MultipartFile image) {
 
         try {
             // 1. 현재 로그인한 사용자 정보 조회
-            Long userId = Long.parseLong(principal.getUsername());
+            Long userId = SecurityUtils.currentUserIdOrThrow();
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 

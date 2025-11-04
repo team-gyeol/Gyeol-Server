@@ -2,15 +2,20 @@ package com.example.oauth2prac.entity;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
 
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
-
 @Component
 
 public class JwtTokenProvider {
@@ -80,5 +85,23 @@ public class JwtTokenProvider {
         String role = getRole(refreshToken);
 
         return createToken(userId, role);
+    }
+
+    public Authentication getAuthentication(String token) {
+
+        // 1. 토큰에서 사용자 ID (principal)를 가져옵니다.
+        String userId = getUserId(token);
+
+        // 2. 토큰에서 "role" 클레임 (authorities)을 가져옵니다.
+        String role = getRole(token);
+
+        // 3. "role" 문자열을 Spring Security가 인식하는 GrantedAuthority 객체로 변환합니다.
+        //    여기서는 단일 역할을 가정하므로 Collections.singletonList를 사용합니다.
+        Collection<? extends GrantedAuthority> authorities =
+                Collections.singletonList(new SimpleGrantedAuthority(role));
+
+        // 4. principal, credentials(null), authorities를 사용하여
+        //    UsernamePasswordAuthenticationToken (Authentication의 구현체)을 생성합니다.
+        return new UsernamePasswordAuthenticationToken(userId, null, authorities);
     }
 }
