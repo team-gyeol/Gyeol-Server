@@ -13,11 +13,6 @@ public class SecurityUtils {
     // private 생성자로 객체 생성을 막습니다.
     private SecurityUtils() { }
 
-    /**
-     * SecurityContext에서 현재 인증된 사용자의 ID(String)를 가져옵니다.
-     *
-     * @return String 타입의 사용자 ID (principal)
-     */
     public static String getCurrentUserIdString() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
