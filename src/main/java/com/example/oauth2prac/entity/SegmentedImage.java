@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @Getter
-public class SegmentedImage {
+public class SegmentedImage extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,4 +30,5 @@ public class SegmentedImage {
 
     @Column(nullable = false, length = 500) // 길이를 넉넉하게 설정
     private String analysisResult;
+
 }
