@@ -2,13 +2,73 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Index</title>
+    <title>소셜 로그인</title>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #74b9ff, #a29bfe);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 50px 70px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        h2 {
+            margin-bottom: 30px;
+            color: #2d3436;
+        }
+
+        .login-btn {
+            display: block;
+            text-decoration: none;
+            margin: 12px 0;
+            padding: 14px 0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .google {
+            background-color: #db4437;
+        }
+
+        .kakao {
+            background-color: #fdd835;
+            color: #3c1e1e;
+        }
+
+        .footer {
+            margin-top: 25px;
+            font-size: 13px;
+            color: #888;
+        }
+    </style>
 </head>
 <body>
-<h2>소셜 로그인 테스트</h2>
+<div class="container">
+    <h2>소셜 로그인 테스트</h2>
 
-<a href="/oauth2/authorization/google">구글 로그인</a><br/>
-<a href="/oauth2/authorization/kakao">카카오 로그인</a>
+    <a href="/oauth2/authorization/google" class="login-btn google">Google로 로그인</a>
+    <a href="/oauth2/authorization/kakao" class="login-btn kakao">Kakao로 로그인</a>
 
+    <div class="footer">© 2025 Gyeol Project</div>
+</div>
 </body>
 </html>
