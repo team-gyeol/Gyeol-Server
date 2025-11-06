@@ -29,12 +29,19 @@ public class MyPageController {
 
     @GetMapping("/images")
     public ResponseEntity<Page<SegmentationImageResponseDto>> getMySegmentationImages(@RequestParam(defaultValue = "1") int page,
-                                                                                      @RequestParam(defaultValue = "10") int size){
+                                                                                      @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(Math.max(page - 1, 0), size);
         Page<SegmentationImageResponseDto> responseDto = myPageService.getMySegmentationImages(pageable);
         return ResponseEntity.ok(responseDto);
 
     }
+
+    @GetMapping("/image")
+    public ResponseEntity<SegmentationImageResponseDto> getMySegmentationImage(@RequestParam Long imageId) {
+        SegmentationImageResponseDto responseDto = myPageService.getMySegmentationImage(imageId);
+        return ResponseEntity.ok(responseDto);
+    }
+
 
 //    @DeleteMapping("/withdraw")
 //    public ResponseEntity<Void> withdraw(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {

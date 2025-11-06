@@ -39,4 +39,20 @@ public class MyPageService {
         return userHistory.map(SegmentationImageResponseDto::from);
 
     }
+
+    @Transactional(readOnly = true)
+    public SegmentationImageResponseDto getMySegmentationImage(Long imageId){
+        Long userId = SecurityUtils.currentUserIdOrThrow();
+
+        SegmentedImage segmentedImage = segmentedImageRepository.findById(imageId)
+                .orElseThrow(() -> new IllegalArgumentException("이미지를 찾을 수 없습니다."));
+
+        return SegmentationImageResponseDto.builder()
+                .segmentedImageUrl(segmentedImage.getImageUrl())
+                .id(segmentedImage.getId())
+                .analysisResult(segmentedImage.getAnalysisResult())
+                .createdAt(segmentedImage.getCreatedAt())
+                .originalImageUrl(segmentedImage.getOriginalImage().getImageUrl())
+                .build();
+    }
 }
