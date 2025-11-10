@@ -36,10 +36,11 @@ jobs:
 
       - name: Build and Push with Jib
         run: |
+          echo "${{ secrets.GCP_SA_KEY }}" > gcp-key.json
           ./gradlew jib \
             -Djib.to.image=gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA \
             -Djib.to.auth.username=_json_key \
-            -Djib.to.auth.password='${{ secrets.GCP_SA_KEY }}'
+            -Djib.to.auth.password="$(cat gcp-key.json)"
 
       - name: Deploy to Cloud Run
         run: |
