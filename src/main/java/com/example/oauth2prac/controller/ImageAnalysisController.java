@@ -7,13 +7,12 @@ import com.example.oauth2prac.entity.OriginalImage;
 import com.example.oauth2prac.entity.User;
 import com.example.oauth2prac.repository.OriginalImageRepository;
 import com.example.oauth2prac.repository.UserRepository;
+import com.example.oauth2prac.service.GCSUploadService;
 import com.example.oauth2prac.service.ImageProcessingService;
-import com.example.oauth2prac.service.S3UploadService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
@@ -28,7 +27,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ImageAnalysisController {
 
-    private final S3UploadService s3UploadService;
+    private final GCSUploadService gcsUploadService;
     private final ImageProcessingService imageProcessingService;
     private final UserRepository userRepository;
     private final OriginalImageRepository originalImageRepository;
@@ -45,7 +44,7 @@ public class ImageAnalysisController {
 
             // 2. 이미지를 S3에 업로드하고 URL을 받음
             log.info("Uploading image to S3: {}", image.getOriginalFilename());
-            String imageUrl = s3UploadService.upload(image);
+            String imageUrl = gcsUploadService.upload(image);
 
             // 3. 원본 이미지 정보를 DB에 저장
             OriginalImage originalImage = OriginalImage.builder()
@@ -100,7 +99,7 @@ public class ImageAnalysisController {
 
             for (MultipartFile image : images) {
                 log.info("Uploading image to S3: {}", image.getOriginalFilename());
-                String imageUrl = s3UploadService.upload(image);
+                String imageUrl = gcsUploadService.upload(image);
 
                 OriginalImage originalImage = OriginalImage.builder()
                         .user(user)

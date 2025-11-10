@@ -1,11 +1,16 @@
-name: CI/CD Pipeline with Systemd
+name: Deploy to Cloud Run
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ main ]
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: asia-northeast3
+  SERVICE_NAME: gyeol-backend
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,71 +22,24 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Build with Gradle
-        uses: gradle/gradle-build-action@v2
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
         with:
-          arguments: clean build -x test
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gyeolServer
-          path: build/libs/*.jar
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: gyeolServer
-          path: build/libs/
-
-      - name: Deploy to EC2
-        env:
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
-          EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
-          EC2_HOST: ${{ secrets.EC2_HOST }}
+      - name: Build and Push with Jib
         run: |
-          echo "$EC2_SSH_KEY" > private_key.pem
-          chmod 600 private_key.pem
-          
-          jar_file=$(find build/libs -name '*.jar' ! -name '*plain.jar' | head -n 1)
-          
-          # JAR 파일 백업 및 전송
-          ssh -i private_key.pem -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "mkdir -p /home/$EC2_USERNAME/backup"
-          ssh -i private_key.pem -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "[ -f /home/$EC2_USERNAME/gyeolServer.jar ] && cp /home/$EC2_USERNAME/gyeolServer.jar /home/$EC2_USERNAME/backup/gyeolServer_\$(date +%Y%m%d_%H%M%S).jar || true"
-          
-          scp -i private_key.pem -o StrictHostKeyChecking=no "$jar_file" $EC2_USERNAME@$EC2_HOST:/home/$EC2_USERNAME/gyeolServer.jar
-          
-          # 서비스 재시작
-          ssh -i private_key.pem -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST << 'EOF'
-            sudo systemctl restart gyeolserver
-            sleep 5
-          
-            # 서비스 상태 확인
-            if sudo systemctl is-active --quiet gyeolserver; then
-              echo "✅ Deployment successful! Service is running."
-              sudo systemctl status gyeolserver --no-pager
-            else
-              echo "❌ Deployment failed! Service is not running."
-              sudo systemctl status gyeolserver --no-pager
-              exit 1
-            fi
-          EOF
-          
-          rm -f private_key.pem
+          ./gradlew jib \
+            -Djib.to.image=gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA \
+            -Djib.to.auth.username=_json_key \
+            -Djib.to.auth.password='${{ secrets.GCP_SA_KEY }}'
 
-      - name: Notify deployment status
-        if: always()
+      - name: Deploy to Cloud Run
         run: |
-          if [ ${{ job.status }} == 'success' ]; then
-            echo "✅ Deployment completed successfully"
-          else
-            echo "❌ Deployment failed"
-          fi
+          gcloud run deploy $SERVICE_NAME \
+            --image gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA \
+            --region $REGION \
+            --platform managed

@@ -1,16 +1,16 @@
 # for commit
 # first commit
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 spring:
   config:
     import: optional:file:.env.properties
   datasource:
-    url: jdbc:mysql://gyeoldb.cx08oc6c8i7a.ap-northeast-2.rds.amazonaws.com:3306/gyeol
+    url: jdbc:mysql:///${DB_NAME}?cloudSqlInstance=${CLOUD_SQL_CONNECTION_NAME}&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ec2user
-    password: ${GYEOL_PASSWORD}
+    username: root
+    password: ${DB_PASSWORD}
   servlet:
     multipart:
       max-file-size: 10MB  # 최대 파일 크기
@@ -64,18 +64,23 @@ jwt:
 
 fastapi:
   server:
-    url: http://localhost:8000
+    url: ${FASTAPI_CLOUD_RUN_URL}
 
 
-cloud:
-  aws:
-    s3:
-      bucket: gyeol-image-bucket # 본인의 S3 버킷 이름
-    credentials:
-      access-key: ${AWS_ACCESS_KEY}
-      secret-key: ${AWS_SECRET_KEY}
-    region:
-      static: ap-northeast-2 # 본인의 S3 버킷 리전
-      auto: false
-    stack:
-      auto: false
+#cloud:
+#  aws:
+#    s3:
+#      bucket: gyeol-image-bucket
+#    credentials:
+#      access-key: ${AWS_ACCESS_KEY}
+#      secret-key: ${AWS_SECRET_KEY}
+#    region:
+#      static: ap-northeast-2
+#      auto: false
+#    stack:
+#      auto: false
+
+gcp:
+  storage:
+    bucket: ${GCS_BUCKET_NAME}
+    project-id: ${PROJECT_ID}
