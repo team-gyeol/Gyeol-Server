@@ -12,13 +12,15 @@ env:
   GCS_BUCKET_NAME: ${{ secrets.GCS_BUCKET_NAME }}
   FASTAPI_URL: ${{ secrets.FASTAPI_URL }}
   DB_NAME: "gyeol"
+  SERVICE_ACCOUNT_EMAIL: ${{ secrets.CLOUD_RUN_SERVICE_ACCOUNT }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -27,20 +29,22 @@ jobs:
           java-version: '17'
 
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
+        uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: ${{ secrets.GCP_SERVICE_KEY }}
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker gcr.io --quiet
 
       - name: Build and Push with Jib
         run: |
-          echo "${{ secrets.GCP_SA_KEY }}" > gcp-key.json
-          ./gradlew jib \
-            -Djib.to.image=gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA \
-            -Djib.to.auth.username=_json_key \
-            -Djib.to.auth.password="$(cat gcp-key.json)"
+          ./gradlew clean jib \
+            -Djib.to.image=gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA
 
       - name: Deploy to Cloud Run
         run: |
@@ -53,7 +57,7 @@ jobs:
             --cpu 1 \
             --timeout 300 \
             --max-instances 10 \
-            --service-account gyeol-cloud-run@${PROJECT_ID}.iam.gserviceaccount.com \
+            --service-account $SERVICE_ACCOUNT_EMAIL \
             --add-cloudsql-instances $CLOUD_SQL_CONNECTION_NAME \
             --set-secrets "DB_PASSWORD=db-password:latest,JWT_SECRET=jwt-secret:latest,GOOGLE_CLIENT_ID=google-client-id:latest,GOOGLE_CLIENT_SECRET=google-client-secret:latest,KAKAO_CLIENT_ID=kakao-client-id:latest,KAKAO_CLIENT_SECRET=kakao-client-secret:latest" \
             --set-env-vars "SPRING_PROFILES_ACTIVE=prod,CLOUD_SQL_CONNECTION_NAME=${CLOUD_SQL_CONNECTION_NAME},DB_NAME=${DB_NAME},PROJECT_ID=${PROJECT_ID},GCS_BUCKET_NAME=${GCS_BUCKET_NAME},fastapi.server.url=${FASTAPI_URL}"
