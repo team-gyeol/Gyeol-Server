@@ -1,4 +1,4 @@
-name: Deploy to Cloud Run
+name: Deploy to Cloud Run (gyeol-backend)
 
 on:
   push:
@@ -6,8 +6,12 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGION: asia-northeast3
   SERVICE_NAME: gyeol-backend
+  REGION: asia-northeast3
+  CLOUD_SQL_CONNECTION_NAME: ${{ secrets.CLOUD_SQL_CONNECTION_NAME }}
+  GCS_BUCKET_NAME: ${{ secrets.GCS_BUCKET_NAME }}
+  FASTAPI_URL: ${{ secrets.FASTAPI_URL }}
+  DB_NAME: "gyeol"
 
 jobs:
   deploy:
@@ -42,4 +46,13 @@ jobs:
           gcloud run deploy $SERVICE_NAME \
             --image gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA \
             --region $REGION \
-            --platform managed
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 512Mi \
+            --cpu 1 \
+            --timeout 300 \
+            --max-instances 10 \
+            --service-account gyeol-cloud-run@${PROJECT_ID}.iam.gserviceaccount.com \
+            --add-cloudsql-instances $CLOUD_SQL_CONNECTION_NAME \
+            --set-secrets "DB_PASSWORD=db-password:latest,JWT_SECRET=jwt-secret:latest,GOOGLE_CLIENT_ID=google-client-id:latest,GOOGLE_CLIENT_SECRET=google-client-secret:latest,KAKAO_CLIENT_ID=kakao-client-id:latest,KAKAO_CLIENT_SECRET=kakao-client-secret:latest" \
+            --set-env-vars "SPRING_PROFILES_ACTIVE=prod,CLOUD_SQL_CONNECTION_NAME=${CLOUD_SQL_CONNECTION_NAME},DB_NAME=${DB_NAME},PROJECT_ID=${PROJECT_ID},GCS_BUCKET_NAME=${GCS_BUCKET_NAME},fastapi.server.url=${FASTAPI_URL}"
