@@ -1,13 +1,74 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>로그인 성공</title>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #81ecec, #74b9ff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            padding: 40px 60px;
+            text-align: center;
+            max-width: 400px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            color: #2d3436;
+            margin-bottom: 20px;
+        }
+
+        p {
+            color: #555;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+
+        span {
+            font-weight: bold;
+            color: #0984e3;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 25px;
+            text-decoration: none;
+            background-color: #0984e3;
+            color: white;
+            padding: 10px 22px;
+            border-radius: 8px;
+            transition: 0.2s;
+            font-weight: bold;
+        }
+
+        a:hover {
+            background-color: #74b9ff;
+            transform: translateY(-2px);
+        }
+    </style>
 </head>
 <body>
-<h1>로그인 성공!</h1>
-<p>이름: <span th:text="${name}">이름</span></p>
-<p>이메일: <span th:text="${email}">이메일</span></p>
-<a href="/">홈으로</a>
+<div class="container">
+    <h1>로그인 성공!</h1>
+    <p>이름: <span th:text="${name}">이름</span></p>
+    <p>이메일: <span th:text="${email}">이메일</span></p>
+    <a href="/">홈으로 돌아가기</a>
+</div>
 </body>
 </html>

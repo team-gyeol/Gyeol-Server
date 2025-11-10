@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AmazonS3Config {
 
-    // application.yml 파일에서 설정한 값들을 주입받습니다.
     @Value("${cloud.aws.credentials.access-key}")
     private String accessKey;
 

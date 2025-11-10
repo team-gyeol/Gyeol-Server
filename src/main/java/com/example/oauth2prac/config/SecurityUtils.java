@@ -4,9 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-/**
- * SecurityContext에서 현재 인증된 사용자의 정보를 가져오기 위한 유틸리티 클래스
- */
+
 @Slf4j
 public class SecurityUtils {
 
@@ -36,13 +34,6 @@ public class SecurityUtils {
         return null;
     }
 
-    /**
-     * SecurityContext에서 현재 인증된 사용자의 ID(Long)를 가져옵니다.
-     * ID가 없거나 Long 타입으로 변환할 수 없으면 예외를 발생시킵니다.
-     *
-     * @return Long 타입의 사용자 ID
-     * @throws IllegalStateException 인증 정보가 없거나, ID가 숫자 형식이 아닐 때
-     */
     public static Long currentUserIdOrThrow() {
         String userIdString = getCurrentUserIdString();
 

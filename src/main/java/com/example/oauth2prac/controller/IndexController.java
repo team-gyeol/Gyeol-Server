@@ -1,6 +1,9 @@
     package com.example.oauth2prac.controller;
 
+    import com.example.oauth2prac.config.SecurityUtils;
     import com.example.oauth2prac.config.oauth2.OAuthAttributes;
+    import com.example.oauth2prac.entity.User;
+    import com.example.oauth2prac.repository.UserRepository;
     import lombok.RequiredArgsConstructor;
     import org.springframework.security.core.annotation.AuthenticationPrincipal;
     import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +18,7 @@
     @RequiredArgsConstructor
     public class IndexController {
 
+        private final UserRepository userRepository;
 
         @GetMapping("/")
         public String index() {
@@ -22,19 +26,24 @@
         }
 
         @GetMapping("/success")
-        public String success(Model model, @AuthenticationPrincipal OAuth2User oAuth2User) {
-            if (oAuth2User == null) {
+        public String success(Model model) {
+            try {
+                // JWT 인증을 통해 저장된 사용자 ID를 가져옴
+                Long userId = SecurityUtils.currentUserIdOrThrow();
+                User user = userRepository.findById(userId)
+                        .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+                // 모델에 사용자 정보 추가
+                model.addAttribute("name", user.getName());
+                model.addAttribute("email", user.getEmail());
+
+                return "success";
+
+            } catch (IllegalStateException e) {
+                // SecurityUtils.currentUserIdOrThrow() 에서 예외 발생 시 (토큰이 없는 경우)
                 model.addAttribute("errorMessage", "로그인 정보가 없습니다.");
                 return "error";
             }
-
-            String registerationId = ((OAuth2AuthenticationToken) SecurityContextHolder.getContext().getAuthentication()).getAuthorizedClientRegistrationId();
-            OAuthAttributes oAuthAttributes = OAuthAttributes.of(registerationId, "sub", oAuth2User.getAttributes());
-
-            model.addAttribute("name", oAuthAttributes.getName());
-            model.addAttribute("email", oAuthAttributes.getEmail());
-
-            return "success";
         }
 
         @GetMapping("/error")
