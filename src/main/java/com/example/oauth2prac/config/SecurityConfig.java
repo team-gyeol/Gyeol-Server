@@ -112,8 +112,13 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+                "https://gyeol-backend-45658829315.asia-northeast3.run.app",
+                "https://gyeol-ml-k2urhc7ojq-du.a.run.app",
+                "https://swagger-ui.cloud-run.app",
+                "http://localhost:8080",
+                "http://localhost:3000"
+        ));
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"
         ));
