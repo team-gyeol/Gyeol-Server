@@ -1,6 +1,7 @@
 package com.example.oauth2prac.service;
 
 import com.google.cloud.storage.*;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Getter
 public class GCSUploadService {
 
     private final Storage storage;
