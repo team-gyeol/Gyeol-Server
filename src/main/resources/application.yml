@@ -2,6 +2,7 @@
 # first commit
 server:
   port: ${PORT:8080}
+  url: ${SERVER_URL:https://gyeol-backend-45658829315.asia-northeast3.run.app}
 
 spring:
   config:
