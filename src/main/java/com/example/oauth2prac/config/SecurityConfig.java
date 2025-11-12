@@ -113,13 +113,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-                "https://gyeol-backend-45658829315.asia-northeast3.run.app",
-                "https://gyeol-ml-k2urhc7ojq-du.a.run.app",
-                "https://swagger-ui.cloud-run.app",
-                "http://localhost:8080",
-                "http://localhost:3000"
-        ));
+        // 모든 origin 허용 (Swagger UI 및 브라우저 직접 호출 지원)
+        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"
         ));
@@ -132,7 +127,7 @@ public class SecurityConfig {
                 "X-Total-Count"
         ));
 
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(false);
 
         configuration.setMaxAge(3600L);
 
