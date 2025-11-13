@@ -82,4 +82,23 @@ public class GCSUploadService {
         Blob blob = storage.get(blobId);
         return blob != null && blob.exists();
     }
+
+
+    public String extractFileNameFromUrl(String imageUrl) {
+        if (imageUrl == null || imageUrl.isEmpty()) {
+            return null;
+        }
+        String prefix = "https://storage.googleapis.com/" + bucketName + "/";
+        if (imageUrl.startsWith(prefix)) {
+            return imageUrl.substring(prefix.length());
+        }
+        return imageUrl;
+    }
+
+    public void deleteByUrl(String imageUrl) {
+        String fileName = extractFileNameFromUrl(imageUrl);
+        if (fileName != null) {
+            delete(fileName);
+        }
+    }
 }

@@ -9,10 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/mypage")
@@ -41,13 +38,10 @@ public class MyPageController {
         SegmentationImageResponseDto responseDto = myPageService.getMySegmentationImage(imageId);
         return ResponseEntity.ok(responseDto);
     }
-
-
-//    @DeleteMapping("/withdraw")
-//    public ResponseEntity<Void> withdraw(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
-//        Long userId = Long.parseLong(principal.getUsername());
-//        // 연관된 데이터(이미지 등)를 먼저 삭제한 후 사용자를 삭제해야 합니다. (Cascade 설정 또는 수동 삭제)
-//        userRepository.deleteById(userId);
-//        return ResponseEntity.ok().build();
-//    }
+    
+    @DeleteMapping("/image/{imageId}")
+    public ResponseEntity<Void> deleteImage(@PathVariable Long imageId) {
+        myPageService.deleteImage(imageId);
+        return ResponseEntity.ok().build();
+    }
 }
