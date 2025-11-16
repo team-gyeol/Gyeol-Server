@@ -52,6 +52,7 @@ public class SecurityConfig {
                                 "/api/token/**",
                                 "/favicon.ico"
                         ).permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
