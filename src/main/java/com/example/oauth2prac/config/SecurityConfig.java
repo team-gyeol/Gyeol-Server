@@ -17,6 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Arrays;
 import java.util.List;
@@ -94,13 +95,14 @@ public class SecurityConfig {
                             user.updateRefreshToken(refreshToken);
                             userRepository.save(user);
 
-                            Cookie cookie = new Cookie("accessToken", token);
-                            cookie.setHttpOnly(true);
-                            cookie.setPath("/");
-                            cookie.setMaxAge(60 * 60);
-                            response.addCookie(cookie);
+                            String frontendUrl = "http://{프론트엔드_주소}/oauth/callback"; // 실제 프론트엔드 주소로 변경해야 합니다.
 
-                            response.sendRedirect("/success");
+                            String redirectUrl = UriComponentsBuilder.fromUriString(frontendUrl)
+                                    .queryParam("accessToken", token)
+                                    .queryParam("refreshToken", refreshToken)
+                                    .build().toUriString();
+
+                            response.sendRedirect(redirectUrl);
                         })
                 );
 
