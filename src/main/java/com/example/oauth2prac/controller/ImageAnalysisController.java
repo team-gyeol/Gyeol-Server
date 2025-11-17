@@ -9,6 +9,7 @@ import com.example.oauth2prac.repository.OriginalImageRepository;
 import com.example.oauth2prac.repository.UserRepository;
 import com.example.oauth2prac.service.GCSUploadService;
 import com.example.oauth2prac.service.ImageProcessingService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -32,6 +33,7 @@ public class ImageAnalysisController {
     private final UserRepository userRepository;
     private final OriginalImageRepository originalImageRepository;
 
+    @Operation(summary = "R-CNN 모델 적용 예측하기")
     @PostMapping(value = "/analyze", consumes = "multipart/form-data")
     public ResponseEntity<?> analyzeImage(
             @RequestPart(value = "image") MultipartFile image) {
@@ -78,6 +80,7 @@ public class ImageAnalysisController {
         }
     }
 
+    @Operation(summary = "R-CNN 모델 적용 예측하기(여러장)")
     @PostMapping(value = "/analyze-multiple", consumes = "multipart/form-data")
     public ResponseEntity<?> analyzeMultipleImages(
             @RequestPart(value = "images") List<MultipartFile> images) {

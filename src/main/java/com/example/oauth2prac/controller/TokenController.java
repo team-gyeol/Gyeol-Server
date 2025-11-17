@@ -6,6 +6,7 @@ import com.example.oauth2prac.dto.TokenRefreshResponseDto;
 import com.example.oauth2prac.entity.JwtTokenProvider;
 import com.example.oauth2prac.entity.User;
 import com.example.oauth2prac.repository.UserRepository;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,6 +24,7 @@ public class TokenController {
 
     // 개발용 토큰 발급
     // @Deprecated
+    @Operation(summary = "개발용 토큰 발급(access)")
     @GetMapping("/{userId}")
     public String generateToken(@PathVariable Long userId){
         User user = userRepository.findById(userId).orElseThrow();
@@ -31,6 +33,7 @@ public class TokenController {
     }
 
     // 토큰 재발급
+    @Operation(summary = "토큰 재발급(access)")
     @PostMapping("/refresh")
     public TokenRefreshResponseDto refreshToken(@RequestBody TokenRefreshRequestDto requestDto) {
 
@@ -41,6 +44,7 @@ public class TokenController {
 
     // 로그아웃
     @PostMapping("/logout")
+    @Operation(summary = "로그아웃")
     public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
         try {
             Long userId = SecurityUtils.currentUserIdOrThrow();
