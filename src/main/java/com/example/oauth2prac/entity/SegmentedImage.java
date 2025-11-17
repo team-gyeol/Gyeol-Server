@@ -31,4 +31,9 @@ public class SegmentedImage extends BaseTimeEntity {
     @Column(nullable = false, length = 500) // 길이를 넉넉하게 설정
     private String analysisResult;
 
+    private Integer multicopterBodyCount;
+    private Integer propellerCount;
+    private Integer cameraCount;
+    private Integer legCount;
+
 }
