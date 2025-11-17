@@ -40,11 +40,23 @@ public class ImageProcessingService {
                     log.error("예상치 못한 오류 발생: {}", error.getMessage(), error);
                 })
                 .flatMap(responseDto -> {
+                    responseDto.parseAnalysisResult();
+                    
+                    log.info("Analysis result parsed - Body: {}, Propeller: {}, Camera: {}, Leg: {}", 
+                            responseDto.getMulticopterBodyCount(),
+                            responseDto.getPropellerCount(),
+                            responseDto.getCameraCount(),
+                            responseDto.getLegCount());
+
                     SegmentedImage segmentedImage = SegmentedImage.builder()
                             .user(originalImage.getUser())
                             .originalImage(originalImage)
                             .imageUrl(responseDto.getSegmentedImageUrl())
                             .analysisResult(responseDto.getAnalysisResult())
+                            .multicopterBodyCount(responseDto.getMulticopterBodyCount())
+                            .propellerCount(responseDto.getPropellerCount())
+                            .cameraCount(responseDto.getCameraCount())
+                            .legCount(responseDto.getLegCount())
                             .build();
 
                     segmentedImageRepository.save(segmentedImage);
