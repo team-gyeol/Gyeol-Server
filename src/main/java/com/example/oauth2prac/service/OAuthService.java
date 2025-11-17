@@ -1,8 +1,8 @@
 package com.example.oauth2prac.service;
 
-import com.example.oauth2prac.config.JwtTokenProvider;
 import com.example.oauth2prac.dto.KakaoUserInfoResponseDto;
 import com.example.oauth2prac.dto.LoginResponseDto;
+import com.example.oauth2prac.entity.JwtTokenProvider;
 import com.example.oauth2prac.entity.Role;
 import com.example.oauth2prac.entity.User;
 import com.example.oauth2prac.repository.UserRepository;
