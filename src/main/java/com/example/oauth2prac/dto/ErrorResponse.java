@@ -1,7 +1,6 @@
 package com.example.oauth2prac.dto;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
