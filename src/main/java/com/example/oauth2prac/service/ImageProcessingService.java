@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -33,12 +32,6 @@ public class ImageProcessingService {
                 .bodyValue(requestDto)
                 .retrieve()
                 .bodyToMono(SegmentationResponseDTO.class)
-                .doOnError(WebClientResponseException.class, error -> {
-                    log.error("FastAPI 요청 실패: {} - {}", error.getStatusCode(), error.getResponseBodyAsString());
-                })
-                .doOnError(Exception.class, error -> {
-                    log.error("예상치 못한 오류 발생: {}", error.getMessage(), error);
-                })
                 .flatMap(responseDto -> {
                     responseDto.parseAnalysisResult();
                     
