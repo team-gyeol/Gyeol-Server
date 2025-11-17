@@ -1,8 +1,8 @@
 package com.example.oauth2prac.service;
 
+import com.example.oauth2prac.config.JwtTokenProvider;
 import com.example.oauth2prac.dto.KakaoUserInfoResponseDto;
 import com.example.oauth2prac.dto.LoginResponseDto;
-import com.example.oauth2prac.entity.JwtTokenProvider;
 import com.example.oauth2prac.entity.Role;
 import com.example.oauth2prac.entity.User;
 import com.example.oauth2prac.repository.UserRepository;
@@ -31,6 +31,9 @@ public class OAuthService {
     @Value("${spring.security.oauth2.client.registration.kakao.client-id}")
     private String kakaoClientId;
 
+    @Value("${spring.security.oauth2.client.registration.kakao.client-secret}")
+    private String kakaoClientSecret;
+
     @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri}")
     private String kakaoRedirectUri;
 
@@ -52,6 +55,7 @@ public class OAuthService {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("grant_type", "authorization_code");
         formData.add("client_id", kakaoClientId);
+        formData.add("client_secret", kakaoClientSecret); // client_secret 추가
         formData.add("redirect_uri", kakaoRedirectUri);
         formData.add("code", code);
 
