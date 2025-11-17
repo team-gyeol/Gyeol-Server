@@ -3,16 +3,14 @@ package com.example.oauth2prac.controller;
 import com.example.oauth2prac.dto.MyPageResponseDto;
 import com.example.oauth2prac.dto.SegmentationImageResponseDto;
 import com.example.oauth2prac.service.MyPageService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/mypage")
@@ -21,12 +19,14 @@ public class MyPageController {
 
     private final MyPageService myPageService;
 
+    @Operation(summary = "사용자 기본 정보 가져오기")
     @GetMapping
     public ResponseEntity<MyPageResponseDto> getMyPageInfo() {
         MyPageResponseDto responseDto = myPageService.getMyPageInfo();
         return ResponseEntity.ok(responseDto);
     }
 
+    @Operation(summary = "분석한 이미지'들'보기")
     @GetMapping("/images")
     public ResponseEntity<Page<SegmentationImageResponseDto>> getMySegmentationImages(@RequestParam(defaultValue = "1") int page,
                                                                                       @RequestParam(defaultValue = "10") int size) {
@@ -36,18 +36,17 @@ public class MyPageController {
 
     }
 
+    @Operation(summary = "분석한 이미지 한 장 보기")
     @GetMapping("/image")
     public ResponseEntity<SegmentationImageResponseDto> getMySegmentationImage(@RequestParam Long imageId) {
         SegmentationImageResponseDto responseDto = myPageService.getMySegmentationImage(imageId);
         return ResponseEntity.ok(responseDto);
     }
 
-
-//    @DeleteMapping("/withdraw")
-//    public ResponseEntity<Void> withdraw(@AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
-//        Long userId = Long.parseLong(principal.getUsername());
-//        // 연관된 데이터(이미지 등)를 먼저 삭제한 후 사용자를 삭제해야 합니다. (Cascade 설정 또는 수동 삭제)
-//        userRepository.deleteById(userId);
-//        return ResponseEntity.ok().build();
-//    }
+    @Operation(summary = "분석 이미지 삭제(원본)")
+    @DeleteMapping("/image/{imageId}")
+    public ResponseEntity<Void> deleteImage(@PathVariable Long imageId) {
+        myPageService.deleteImage(imageId);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -1,15 +1,26 @@
-name: CI/CD Pipeline with Systemd
+name: Deploy to Cloud Run (gyeol-backend)
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ main ]
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  SERVICE_NAME: gyeol-backend
+  REGION: asia-northeast3
+  CLOUD_SQL_CONNECTION_NAME: ${{ secrets.CLOUD_SQL_CONNECTION_NAME }}
+  GCS_BUCKET_NAME: ${{ secrets.GCS_BUCKET_NAME }}
+  FASTAPI_URL: ${{ secrets.FASTAPI_URL }}
+  DB_NAME: "gyeol"
+  SERVICE_ACCOUNT_EMAIL: ${{ secrets.CLOUD_RUN_SERVICE_ACCOUNT }}
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -17,71 +28,36 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Build with Gradle
-        uses: gradle/gradle-build-action@v2
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          arguments: clean build -x test
+          credentials_json: ${{ secrets.GCP_SERVICE_KEY }}
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
         with:
-          name: gyeolServer
-          path: build/libs/*.jar
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker gcr.io --quiet
 
-    steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: gyeolServer
-          path: build/libs/
-
-      - name: Deploy to EC2
-        env:
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
-          EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
-          EC2_HOST: ${{ secrets.EC2_HOST }}
+      - name: Build and Push with Jib
         run: |
-          echo "$EC2_SSH_KEY" > private_key.pem
-          chmod 600 private_key.pem
-          
-          jar_file=$(find build/libs -name '*.jar' ! -name '*plain.jar' | head -n 1)
-          
-          # JAR 파일 백업 및 전송
-          ssh -i private_key.pem -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "mkdir -p /home/$EC2_USERNAME/backup"
-          ssh -i private_key.pem -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "[ -f /home/$EC2_USERNAME/gyeolServer.jar ] && cp /home/$EC2_USERNAME/gyeolServer.jar /home/$EC2_USERNAME/backup/gyeolServer_\$(date +%Y%m%d_%H%M%S).jar || true"
-          
-          scp -i private_key.pem -o StrictHostKeyChecking=no "$jar_file" $EC2_USERNAME@$EC2_HOST:/home/$EC2_USERNAME/gyeolServer.jar
-          
-          # 서비스 재시작
-          ssh -i private_key.pem -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST << 'EOF'
-            sudo systemctl restart gyeolserver
-            sleep 5
-          
-            # 서비스 상태 확인
-            if sudo systemctl is-active --quiet gyeolserver; then
-              echo "✅ Deployment successful! Service is running."
-              sudo systemctl status gyeolserver --no-pager
-            else
-              echo "❌ Deployment failed! Service is not running."
-              sudo systemctl status gyeolserver --no-pager
-              exit 1
-            fi
-          EOF
-          
-          rm -f private_key.pem
+          ./gradlew clean jib \
+            -Djib.to.image=gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA
 
-      - name: Notify deployment status
-        if: always()
+      - name: Deploy to Cloud Run
         run: |
-          if [ ${{ job.status }} == 'success' ]; then
-            echo "✅ Deployment completed successfully"
-          else
-            echo "❌ Deployment failed"
-          fi
+          gcloud run deploy $SERVICE_NAME \
+            --image gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA \
+            --region $REGION \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 1Gi \
+            --cpu 1 \
+            --timeout 300 \
+            --max-instances 10 \
+            --service-account $SERVICE_ACCOUNT_EMAIL \
+            --add-cloudsql-instances $CLOUD_SQL_CONNECTION_NAME \
+            --set-secrets "DB_PASSWORD=db-password:latest,JWT_SECRET=jwt-secret:latest,GOOGLE_CLIENT_ID=google-client-id:latest,GOOGLE_CLIENT_SECRET=google-client-secret:latest,KAKAO_CLIENT_ID=kakao-client-id:latest,KAKAO_CLIENT_SECRET=kakao-client-secret:latest" \
+            --set-env-vars "SPRING_PROFILES_ACTIVE=prod,CLOUD_SQL_CONNECTION_NAME=${CLOUD_SQL_CONNECTION_NAME},DB_NAME=${DB_NAME},PROJECT_ID=${PROJECT_ID},GCS_BUCKET_NAME=${GCS_BUCKET_NAME},fastapi.server.url=${FASTAPI_URL}"

@@ -6,7 +6,9 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 .env.properties
-
+.env.local
+cors.json
+main.py
 
 ### STS ###
 .apt_generated

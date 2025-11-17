@@ -7,11 +7,9 @@ import com.example.oauth2prac.entity.SegmentedImage;
 import com.example.oauth2prac.repository.SegmentedImageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -24,7 +22,7 @@ public class ImageProcessingService {
 
     @Transactional
     public Mono<SegmentationResponseDTO> requestSegmentation(OriginalImage originalImage) {
-        // FastAPI에 보낼 요청 DTO 생성
+
         SegmentationRequestDto requestDto = new SegmentationRequestDto(originalImage.getImageUrl());
 
         log.info("Sending segmentation request to FastAPI for image: {}", originalImage.getImageUrl());
@@ -34,19 +32,24 @@ public class ImageProcessingService {
                 .bodyValue(requestDto)
                 .retrieve()
                 .bodyToMono(SegmentationResponseDTO.class)
-                .doOnError(WebClientResponseException.class, error -> {
-                    log.error("FastAPI 요청 실패: {} - {}", error.getStatusCode(), error.getResponseBodyAsString());
-                })
-                .doOnError(Exception.class, error -> {
-                    log.error("예상치 못한 오류 발생: {}", error.getMessage(), error);
-                })
                 .flatMap(responseDto -> {
-                    // 응답 받은 결과로 SegmentedImage 엔티티를 생성하고 DB에 저장
+                    responseDto.parseAnalysisResult();
+                    
+                    log.info("Analysis result parsed - Body: {}, Propeller: {}, Camera: {}, Leg: {}", 
+                            responseDto.getMulticopterBodyCount(),
+                            responseDto.getPropellerCount(),
+                            responseDto.getCameraCount(),
+                            responseDto.getLegCount());
+
                     SegmentedImage segmentedImage = SegmentedImage.builder()
                             .user(originalImage.getUser())
                             .originalImage(originalImage)
                             .imageUrl(responseDto.getSegmentedImageUrl())
                             .analysisResult(responseDto.getAnalysisResult())
+                            .multicopterBodyCount(responseDto.getMulticopterBodyCount())
+                            .propellerCount(responseDto.getPropellerCount())
+                            .cameraCount(responseDto.getCameraCount())
+                            .legCount(responseDto.getLegCount())
                             .build();
 
                     segmentedImageRepository.save(segmentedImage);
