@@ -51,7 +51,9 @@ public class OAuthService {
                 .map(this::generateTokens);
     }
 
+    // 카카오으로부터 accessToken을 발급받음.
     private Mono<String> getKakaoAccessToken(String code) {
+        // MultiValueMap : key 하나에 여러 value(리스트)
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("grant_type", "authorization_code");
         formData.add("client_id", kakaoClientId);
@@ -59,6 +61,7 @@ public class OAuthService {
         formData.add("redirect_uri", kakaoRedirectUri);
         formData.add("code", code);
 
+        // 직렬화
         return webClient.post()
                 .uri(kakaoTokenUri)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
