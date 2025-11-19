@@ -18,14 +18,13 @@ import java.util.UUID;
 public class GCSUploadService {
 
     private final Storage storage;
+    private static final String folderName = "originalImage";
 
     @Value("${gcp.storage.bucket}")
     private String bucketName;
 
     // 파일을 Google Cloud Storage에 업로드하고 공개 URL 반환
     public String upload(MultipartFile multipartFile) throws IOException {
-        String folderName = "originalImage";
-
         // 고유한 파일 이름 생성
         String originalFilename = multipartFile.getOriginalFilename();
         String fileName = UUID.randomUUID() + "-" + originalFilename;
@@ -52,7 +51,7 @@ public class GCSUploadService {
         return String.format(
                 "https://storage.googleapis.com/%s/%s",
                 bucketName,
-                fileName
+                gcsPath
         );
     }
 
