@@ -24,12 +24,16 @@ public class GCSUploadService {
 
     // 파일을 Google Cloud Storage에 업로드하고 공개 URL 반환
     public String upload(MultipartFile multipartFile) throws IOException {
+        String folderName = "originalImage";
+
         // 고유한 파일 이름 생성
         String originalFilename = multipartFile.getOriginalFilename();
         String fileName = UUID.randomUUID() + "-" + originalFilename;
 
+        String gcsPath = folderName + "/" + fileName;
+
         // BlobId 생성 (버킷명 + 파일명)
-        BlobId blobId = BlobId.of(bucketName, fileName);
+        BlobId blobId = BlobId.of(bucketName, gcsPath);
 
         // BlobInfo 생성 (메타데이터 설정)
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
