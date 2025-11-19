@@ -1,0 +1,57 @@
+package com.example.oauth2prac.domain.segmentedImage;
+
+import com.example.oauth2prac.domain.originalImage.OriginalImage;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class ImageProcessingService {
+
+    private final WebClient webClient;
+    private final SegmentedImageRepository segmentedImageRepository;
+
+    @Transactional
+    public Mono<SegmentationResponseDTO> requestSegmentation(OriginalImage originalImage) {
+
+        SegmentationRequestDto requestDto = new SegmentationRequestDto(originalImage.getImageUrl());
+
+        log.info("Sending segmentation request to FastAPI for image: {}", originalImage.getImageUrl());
+
+        return webClient.post()
+                .uri("/analyze-url")
+                .bodyValue(requestDto)
+                .retrieve()
+                .bodyToMono(SegmentationResponseDTO.class)
+                .flatMap(responseDto -> {
+                    responseDto.parseAnalysisResult();
+                    
+                    log.info("Analysis result parsed - Body: {}, Propeller: {}, Camera: {}, Leg: {}", 
+                            responseDto.getMulticopterBodyCount(),
+                            responseDto.getPropellerCount(),
+                            responseDto.getCameraCount(),
+                            responseDto.getLegCount());
+
+                    SegmentedImage segmentedImage = SegmentedImage.builder()
+                            .user(originalImage.getUser())
+                            .originalImage(originalImage)
+                            .imageUrl(responseDto.getSegmentedImageUrl())
+                            .analysisResult(responseDto.getAnalysisResult())
+                            .multicopterBodyCount(responseDto.getMulticopterBodyCount())
+                            .propellerCount(responseDto.getPropellerCount())
+                            .cameraCount(responseDto.getCameraCount())
+                            .legCount(responseDto.getLegCount())
+                            .build();
+
+                    segmentedImageRepository.save(segmentedImage);
+                    log.info("Segmentation result saved successfully for image ID: {}", originalImage.getId());
+
+                    return Mono.just(responseDto);
+                });
+    }
+}
