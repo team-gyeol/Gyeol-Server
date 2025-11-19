@@ -18,6 +18,7 @@ import java.util.UUID;
 public class GCSUploadService {
 
     private final Storage storage;
+    private static final String folderName = "originalImage";
 
     @Value("${gcp.storage.bucket}")
     private String bucketName;
@@ -28,8 +29,10 @@ public class GCSUploadService {
         String originalFilename = multipartFile.getOriginalFilename();
         String fileName = UUID.randomUUID() + "-" + originalFilename;
 
+        String gcsPath = folderName + "/" + fileName;
+
         // BlobId 생성 (버킷명 + 파일명)
-        BlobId blobId = BlobId.of(bucketName, fileName);
+        BlobId blobId = BlobId.of(bucketName, gcsPath);
 
         // BlobInfo 생성 (메타데이터 설정)
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
@@ -48,7 +51,7 @@ public class GCSUploadService {
         return String.format(
                 "https://storage.googleapis.com/%s/%s",
                 bucketName,
-                fileName
+                gcsPath
         );
     }
 
