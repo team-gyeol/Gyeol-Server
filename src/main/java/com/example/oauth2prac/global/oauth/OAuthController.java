@@ -27,23 +27,25 @@ public class OAuthController {
 
     @Operation(summary = "카카오 로그인 콜백", description = "카카오로부터 인가 코드를 받아 로그인을 처리합니다.")
     @GetMapping("/kakao/callback")
-    public Mono<ResponseEntity<Void>> kakaoCallback(@RequestParam("code") String code) {
+    public Mono<ResponseEntity<LoginResponseDto>> kakaoCallback(@RequestParam("code") String code) {
+//        return oAuthService.loginWithKakao(code)
+//                .map(tokens -> {
+//                    String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl)
+//                            .queryParam("accessToken", tokens.getAccessToken())
+//                            .queryParam("refreshToken", tokens.getRefreshToken())
+//                            .build()
+//                            .encode(StandardCharsets.UTF_8)
+//                            .toUriString();
+//
+//                    HttpHeaders headers = new HttpHeaders();
+//                    headers.add(HttpHeaders.LOCATION, targetUrl);
+//
+//                    return ResponseEntity
+//                            .status(HttpStatus.FOUND)
+//                            .headers(headers)
+//                            .build();
+//                });
         return oAuthService.loginWithKakao(code)
-                .map(tokens -> {
-                    String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl)
-                            .queryParam("accessToken", tokens.getAccessToken())
-                            .queryParam("refreshToken", tokens.getRefreshToken())
-                            .build()
-                            .encode(StandardCharsets.UTF_8)
-                            .toUriString();
-
-                    HttpHeaders headers = new HttpHeaders();
-                    headers.add(HttpHeaders.LOCATION, targetUrl);
-
-                    return ResponseEntity
-                            .status(HttpStatus.FOUND)
-                            .headers(headers)
-                            .build();
-                });
+                .map(ResponseEntity::ok);
     }
 }
