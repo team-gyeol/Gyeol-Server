@@ -39,7 +39,8 @@ public class SecurityConfig {
                                 "/swagger-resources/**",
                                 "/webjars/**",
                                 "/api/token/**",
-                                "/api/oauth/**", // OAuth2 로그인 API 경로 허용
+                                "/api/oauth/**", // OAuth2 로그인 콜백 API 경로
+                                "/oauth2/**",     // OAuth2 로그인 시작 API 경로
                                 "/favicon.ico"
                         ).permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
