@@ -48,7 +48,7 @@ spring:
             client-secret: ${KAKAO_CLIENT_SECRET}
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
-            redirect-uri: "{baseurl}/api/oauth/kakao/callback"
+            redirect-uri: "{baseUrl}/api/oauth/kakao/callback"
             scope:
               - profile_nickname
               - account_email
