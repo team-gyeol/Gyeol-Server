@@ -25,7 +25,7 @@ public class TokenController {
     @GetMapping("/{userId}")
     public String generateToken(@PathVariable Long userId){
         User user = userRepository.findById(userId).orElseThrow();
-        String accessToken=jwtTokenProvider.createToken(user.getId().toString(),user.getRoleKey());
+        String accessToken=jwtTokenProvider.createAccessToken(user.getId().toString(),user.getRoleKey());
         return accessToken;
     }
 

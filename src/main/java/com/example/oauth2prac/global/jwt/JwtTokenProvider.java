@@ -30,7 +30,7 @@ public class JwtTokenProvider {
     }
 
 
-    public String createToken(String userId, String role) {
+    public String createAccessToken(String userId, String role) {
         return Jwts.builder()
                 .setSubject(userId)
                 .claim("role", role)
@@ -40,9 +40,10 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public String createRefreshToken(String userId) {
+    public String createRefreshToken(String userId, String role) {
         return Jwts.builder()
                 .setSubject(userId)
+                .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_VALIDITY))
                 .signWith(key,io.jsonwebtoken.SignatureAlgorithm.HS256)
@@ -84,7 +85,7 @@ public class JwtTokenProvider {
         String userId = getUserId(refreshToken);
         String role = getRole(refreshToken);
 
-        return createToken(userId, role);
+        return createAccessToken(userId, role);
     }
 
     public Authentication getAuthentication(String token) {
