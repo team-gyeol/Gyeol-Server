@@ -67,6 +67,9 @@ fastapi:
   server:
     url: ${FASTAPI_CLOUD_RUN_URL}
 
+frontend:
+  url: ${FRONTEND_URL}
+
 
 #cloud:
 #  aws:
