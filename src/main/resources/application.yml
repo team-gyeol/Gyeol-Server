@@ -48,7 +48,7 @@ spring:
             client-secret: ${KAKAO_CLIENT_SECRET}
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
-            redirect-uri: "http://localhost:5173/callback"
+            redirect-uri: "https://gyeol-three.vercel.app/callback"
             scope:
               - profile_nickname
               - account_email
@@ -68,7 +68,7 @@ fastapi:
     url: ${FASTAPI_CLOUD_RUN_URL}
 
 frontend:
-  url: http://localhost:5173/
+  url: https://gyeol-three.vercel.app/
 
 
 #cloud:
