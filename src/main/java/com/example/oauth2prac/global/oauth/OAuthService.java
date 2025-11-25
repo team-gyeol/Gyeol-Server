@@ -82,6 +82,7 @@ public class OAuthService {
         String email = userInfo.getKakaoAccount().getEmail();
         String nickname = userInfo.getProperties().getNickname();
         String profileImage = userInfo.getProperties().getProfileImageUrl();
+        String oauthId = userInfo.getId().toString();
 
         return Mono.fromCallable(() -> userRepository.findByEmail(email)
                 .map(user -> {
@@ -96,6 +97,7 @@ public class OAuthService {
                             .name(nickname)
                             .picture(profileImage)
                             .role(Role.USER)
+                            .oauthId(oauthId)
                             .build();
                     return userRepository.save(newUser);
                 })).subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic());
