@@ -14,6 +14,8 @@ public interface SegmentedImageRepository extends JpaRepository<SegmentedImage, 
     SegmentedImage findByAnalysisResult(String analysisResult);
     List<SegmentedImage> findAllByUser(User user);
 
+    Long countByUser(User user);
+
     @Query(value = "SELECT si FROM SegmentedImage si " +
             "JOIN FETCH si.user u " +
             "JOIN FETCH si.originalImage oi " +
