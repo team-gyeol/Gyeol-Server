@@ -46,4 +46,11 @@ public class MyPageController {
         myPageService.deleteImage(imageId);
         return ResponseEntity.ok().build();
     }
+
+    @Operation(summary = "분석한 이미지 개수 가져오기")
+    @GetMapping("/images/count")
+    public ResponseEntity<Long> getAnalyzedImageCount() {
+        Long count = myPageService.getAnalyzedImageCount();
+        return ResponseEntity.ok(count);
+    }
 }

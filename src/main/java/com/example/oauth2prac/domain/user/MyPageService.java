@@ -92,4 +92,12 @@ public class MyPageService {
             throw new RuntimeException("이미지 삭제에 실패했습니다: " + e.getMessage());
         }
     }
+
+    @Transactional(readOnly = true)
+    public Long getAnalyzedImageCount() {
+        Long userId = SecurityUtils.currentUserIdOrThrow();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        return segmentedImageRepository.countByUser(user);
+    }
 }
