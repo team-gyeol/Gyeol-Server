@@ -46,11 +46,12 @@ public class User {
     private List<SegmentedImage> segmentedImages = new ArrayList<>();
 
     @Builder
-    public User(String name, String email, String picture, Role role) {
+    public User(String name, String email, String picture, Role role, String oauthId) {
         this.name = name;
         this.email = email;
         this.picture = picture;
         this.role = role;
+        this.oauthId = oauthId;
     }
 
     public User updateRefreshToken(String refreshToken) {
