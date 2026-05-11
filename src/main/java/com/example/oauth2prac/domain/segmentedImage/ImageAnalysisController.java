@@ -40,6 +40,7 @@ public class ImageAnalysisController {
     public ResponseEntity<?> analyzeImage(
             @RequestPart(value = "image") MultipartFile image) {
 
+        OriginalImage originalImage = null;
         try {
             // 1. 사용자 정보 조회
             Long userId = SecurityUtils.currentUserIdOrThrow();
@@ -47,7 +48,7 @@ public class ImageAnalysisController {
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
             // 2. 이미지를 GCS에 업로드하고 원본 이미지 정보를 DB에 저장
-            OriginalImage originalImage = uploadAndSaveOriginalImage(image, user);
+            originalImage = uploadAndSaveOriginalImage(image, user);
 
             // 3. FastAPI에 분석 요청 보내고 결과를 받음
             SegmentationResponseDTO analysisResult = imageProcessingService
@@ -62,6 +63,7 @@ public class ImageAnalysisController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(e.getMessage());
         } catch (Exception e) {
+            cleanupOriginalImage(originalImage);
             Throwable cause = Exceptions.unwrap(e);
             if (cause instanceof IOException) {
                 log.error("이미지 업로드 중 오류 발생: {}", cause.getMessage(), cause);
@@ -95,7 +97,8 @@ public class ImageAnalysisController {
             List<SegmentationResponseDTO> results = Flux.fromIterable(images)
                     .flatMapSequential(image -> Mono.fromCallable(() -> uploadAndSaveOriginalImage(image, user))
                                     .subscribeOn(Schedulers.boundedElastic())
-                                    .flatMap(imageProcessingService::requestSegmentation),
+                                    .flatMap(originalImage -> imageProcessingService.requestSegmentation(originalImage)
+                                            .doOnError(error -> cleanupOriginalImage(originalImage))),
                             IMAGE_PROCESSING_CONCURRENCY)
                     .collectList()
                     .block();
@@ -137,5 +140,19 @@ public class ImageAnalysisController {
         log.info("Original image saved with ID: {}", originalImage.getId());
 
         return originalImage;
+    }
+
+    private void cleanupOriginalImage(OriginalImage originalImage) {
+        if (originalImage == null) {
+            return;
+        }
+
+        try {
+            log.info("Cleaning up original image after failed analysis: {}", originalImage.getImageUrl());
+            gcsUploadService.deleteByUrl(originalImage.getImageUrl());
+            originalImageRepository.delete(originalImage);
+        } catch (Exception cleanupError) {
+            log.warn("원본 이미지 정리 중 오류 발생: {}", cleanupError.getMessage(), cleanupError);
+        }
     }
 }
