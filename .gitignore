@@ -1,8 +1,5 @@
 HELP.md
 
-.DS_Store
-__pycache__/
-
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar

@@ -39,8 +39,11 @@ public class GCSUploadService {
                 .setContentType(multipartFile.getContentType())
                 .build();
 
-        // 파일 업로드 byte -> stream
-        Blob blob = storage.createFrom(blobInfo, multipartFile.getInputStream());
+        // 파일 업로드
+        Blob blob = storage.create(
+                blobInfo,
+                multipartFile.getBytes()
+        );
 
         log.info("File uploaded to GCS: {}", fileName);
 

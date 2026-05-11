@@ -9,7 +9,6 @@ import com.example.oauth2prac.global.gcs.GCSUploadService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,9 +30,6 @@ public class ImageAnalysisController {
     private final UserRepository userRepository;
     private final OriginalImageRepository originalImageRepository;
 
-    @Value("${fastapi.segmentation.max-concurrency:2}")
-    private int segmentationMaxConcurrency;
-
     @Operation(summary = "R-CNN 모델 적용 예측하기")
     @PostMapping(value = "/analyze", consumes = "multipart/form-data")
     public ResponseEntity<?> analyzeImage(
@@ -45,8 +41,8 @@ public class ImageAnalysisController {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-            // 2. 이미지를 GCS에 업로드하고 URL을 받음
-            log.info("Uploading image to GCS: {}", image.getOriginalFilename());
+            // 2. 이미지를 S3에 업로드하고 URL을 받음
+            log.info("Uploading image to S3: {}", image.getOriginalFilename());
             String imageUrl = gcsUploadService.upload(image);
 
             // 3. 원본 이미지 정보를 DB에 저장
@@ -102,7 +98,7 @@ public class ImageAnalysisController {
             List<OriginalImage> originalImages = new ArrayList<>();
 
             for (MultipartFile image : images) {
-                log.info("Uploading image to GCS: {}", image.getOriginalFilename());
+                log.info("Uploading image to S3: {}", image.getOriginalFilename());
                 String imageUrl = gcsUploadService.upload(image);
 
                 OriginalImage originalImage = OriginalImage.builder()
@@ -117,10 +113,7 @@ public class ImageAnalysisController {
 
             // Reactor Flux 비동기 병렬 처리
             List<SegmentationResponseDTO> results = Flux.fromIterable(originalImages)
-                    .flatMap(
-                            originalImage -> imageProcessingService.requestSegmentation(originalImage),
-                            segmentationMaxConcurrency
-                    )
+                    .flatMap(originalImage -> imageProcessingService.requestSegmentation(originalImage))
                     .collectList()
                     .block();
 

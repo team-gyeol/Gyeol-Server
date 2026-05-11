@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 @Slf4j
 @Service
@@ -29,7 +28,6 @@ public class ImageProcessingService {
                 .bodyValue(requestDto)
                 .retrieve()
                 .bodyToMono(SegmentationResponseDTO.class)
-                .publishOn(Schedulers.boundedElastic()) // 별도 스레드 처리
                 .flatMap(responseDto -> {
                     responseDto.parseAnalysisResult();
                     
