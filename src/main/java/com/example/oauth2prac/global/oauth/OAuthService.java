@@ -87,7 +87,6 @@ public class OAuthService {
         return Mono.fromCallable(() -> userRepository.findByEmail(email)
                 .map(user -> {
                     log.info("Existing user found: {}", user.getEmail());
-                    // Optionally update user info here if needed
                     return user;
                 })
                 .orElseGet(() -> {
