@@ -52,6 +52,11 @@ public class ImageProcessingService {
                     log.info("Segmentation result saved successfully for image ID: {}", originalImage.getId());
 
                     return Mono.just(responseDto);
-                });
+                })
+                .doOnError(error -> log.warn(
+                        "Segmentation failed for original image ID {}: {}",
+                        originalImage.getId(),
+                        error.getMessage()
+                ));
     }
 }
