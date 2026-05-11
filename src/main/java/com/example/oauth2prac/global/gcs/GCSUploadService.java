@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.UUID;
 
 @Slf4j
@@ -39,11 +40,9 @@ public class GCSUploadService {
                 .setContentType(multipartFile.getContentType())
                 .build();
 
-        // 파일 업로드
-        Blob blob = storage.create(
-                blobInfo,
-                multipartFile.getBytes()
-        );
+        try (InputStream inputStream = multipartFile.getInputStream()) {
+            storage.createFrom(blobInfo, inputStream);
+        }
 
         log.info("File uploaded to GCS: {}", fileName);
 
