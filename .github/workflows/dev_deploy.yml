@@ -11,6 +11,7 @@ env:
   CLOUD_SQL_CONNECTION_NAME: ${{ secrets.CLOUD_SQL_CONNECTION_NAME }}
   GCS_BUCKET_NAME: ${{ secrets.GCS_BUCKET_NAME }}
   FASTAPI_URL: ${{ secrets.FASTAPI_URL }}
+  FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
   DB_NAME: "gyeol"
   SERVICE_ACCOUNT_EMAIL: ${{ secrets.CLOUD_RUN_SERVICE_ACCOUNT }}
 
@@ -60,4 +61,4 @@ jobs:
             --service-account $SERVICE_ACCOUNT_EMAIL \
             --add-cloudsql-instances $CLOUD_SQL_CONNECTION_NAME \
             --set-secrets "DB_PASSWORD=db-password:latest,JWT_SECRET=jwt-secret:latest,GOOGLE_CLIENT_ID=google-client-id:latest,GOOGLE_CLIENT_SECRET=google-client-secret:latest,KAKAO_CLIENT_ID=kakao-client-id:latest,KAKAO_CLIENT_SECRET=kakao-client-secret:latest" \
-            --set-env-vars "SPRING_PROFILES_ACTIVE=prod,CLOUD_SQL_CONNECTION_NAME=${CLOUD_SQL_CONNECTION_NAME},DB_NAME=${DB_NAME},PROJECT_ID=${PROJECT_ID},GCS_BUCKET_NAME=${GCS_BUCKET_NAME},fastapi.server.url=${FASTAPI_URL}"
+            --set-env-vars "SPRING_PROFILES_ACTIVE=prod,CLOUD_SQL_CONNECTION_NAME=${CLOUD_SQL_CONNECTION_NAME},DB_NAME=${DB_NAME},PROJECT_ID=${PROJECT_ID},GCS_BUCKET_NAME=${GCS_BUCKET_NAME},fastapi.server.url=${FASTAPI_URL},FRONTEND_URL=${FRONTEND_URL}"
