@@ -1,0 +1,109 @@
+# 로컬 부하 테스트 / 성능 계측 스택
+#
+#   docker compose up -d
+#   ./gradlew bootRun --args='--spring.profiles.active=local'
+#
+#   mysql       localhost:3308   (호스트 MySQL 3306 과 충돌 회피)
+#   wiremock    localhost:8081   (FastAPI ML 서버 스텁)
+#   prometheus  localhost:9090
+#   grafana     localhost:3001   (admin / admin)
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: gyeol-mysql
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: gyeol
+      MYSQL_USER: gyeol
+      MYSQL_PASSWORD: gyeol
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      # 커넥션 풀 실험(B3)에서 DB 가 먼저 한계에 걸리지 않도록 넉넉히
+      - --max_connections=500
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # FastAPI ML 서버(/analyze-url) 스텁.
+  # 고정 지연으로 추론 시간을 모사해 Spring 백엔드 자체 병목만 분리 측정한다.
+  wiremock:
+    image: wiremock/wiremock:3.9.1
+    container_name: gyeol-ml-mock
+    ports:
+      - "8081:8080"
+    command:
+      - --global-response-templating
+      - --disable-banner
+      # 부하 테스트에서 스텁 자체가 병목이 되지 않도록
+      - --container-threads=200
+      - --max-http-client-connections=200
+    volumes:
+      - ./load-test/mock:/home/wiremock:ro
+
+  # GCS 에뮬레이터.
+  # 실제 버킷을 쓰면 매 요청마다 인터넷 왕복 지연이 측정값에 섞이고, 부하 테스트가
+  # 버킷에 객체를 대량 생성한다. 로컬에서는 에뮬레이터로 GCS 를 상수 취급하고
+  # 백엔드 자체 병목(스레드/커넥션/트랜잭션)만 분리해서 본다.
+  # 실제 GCS 로 측정하려면: GCS_EMULATOR_HOST= (빈 값) 으로 앱을 실행
+  fake-gcs:
+    image: fsouza/fake-gcs-server:1.49
+    container_name: gyeol-fake-gcs
+    ports:
+      - "4443:4443"
+    # backend=memory 는 부하 테스트 물량(수만 건)에서 OOM 으로 죽는다.
+    # filesystem 백엔드 + run.sh 의 실행 전 초기화 조합으로 용량을 묶는다.
+    command:
+      - -scheme=http
+      - -port=4443
+      - -public-host=localhost:4443
+      - -backend=filesystem
+      - -filesystem-root=/storage
+      - -data=/data
+    volumes:
+      - ./load-test/mock/gcs-seed:/data:ro
+      - fake-gcs-data:/storage
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: gyeol-prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: gyeol-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+volumes:
+  mysql-data:
+  prometheus-data:
+  grafana-data:
+  fake-gcs-data:

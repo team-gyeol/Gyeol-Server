@@ -1,0 +1,200 @@
+{
+  "uid": "gyeol-backend-perf",
+  "title": "Gyeol Backend — 성능/병목",
+  "tags": ["gyeol", "performance"],
+  "timezone": "browser",
+  "editable": true,
+  "schemaVersion": 39,
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "uri",
+        "label": "URI",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(http_server_requests_seconds_count{application=\"gyeol-backend\"}, uri)",
+        "current": { "text": "/api/images/analyze", "value": "/api/images/analyze" },
+        "includeAll": true,
+        "multi": true,
+        "refresh": 2
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "요청 처리량 / 응답시간",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "type": "timeseries",
+      "title": "처리량 (RPS)",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "fillOpacity": 10 } } },
+      "targets": [
+        {
+          "expr": "sum by (uri) (rate(http_server_requests_seconds_count{application=\"gyeol-backend\", uri=~\"$uri\"}[30s]))",
+          "legendFormat": "{{uri}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "응답시간 p50 / p95 / p99",
+      "gridPos": { "h": 8, "w": 10, "x": 8, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le, uri) (rate(http_server_requests_seconds_bucket{application=\"gyeol-backend\", uri=~\"$uri\"}[1m])))",
+          "legendFormat": "p50 {{uri}}"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, uri) (rate(http_server_requests_seconds_bucket{application=\"gyeol-backend\", uri=~\"$uri\"}[1m])))",
+          "legendFormat": "p95 {{uri}}"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, uri) (rate(http_server_requests_seconds_bucket{application=\"gyeol-backend\", uri=~\"$uri\"}[1m])))",
+          "legendFormat": "p99 {{uri}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "에러율 (5xx 비율)",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "max": 1, "min": 0 } },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{application=\"gyeol-backend\", outcome=~\"SERVER_ERROR|CLIENT_ERROR\"}[1m])) / clamp_min(sum(rate(http_server_requests_seconds_count{application=\"gyeol-backend\"}[1m])), 0.001)",
+          "legendFormat": "error rate"
+        }
+      ]
+    },
+
+    {
+      "type": "row",
+      "title": "병목 후보 — 스레드 / 커넥션 풀",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 }
+    },
+    {
+      "type": "timeseries",
+      "title": "B1 — Tomcat 스레드 (busy vs max)",
+      "description": "busy 가 max 에 붙으면 서블릿 스레드가 블로킹 I/O 로 포화된 상태.",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 10 },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [
+        { "expr": "tomcat_threads_busy_threads{application=\"gyeol-backend\"}", "legendFormat": "busy" },
+        { "expr": "tomcat_threads_current_threads{application=\"gyeol-backend\"}", "legendFormat": "current" },
+        { "expr": "tomcat_threads_config_max_threads{application=\"gyeol-backend\"}", "legendFormat": "max" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "B2 — WebClient(Reactor Netty) 커넥션 풀",
+      "description": "pending 이 0 보다 크면 ML 호출이 커넥션을 못 얻고 대기 중.",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 10 },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [
+        { "expr": "sum(reactor_netty_connection_provider_active_connections{application=\"gyeol-backend\"})", "legendFormat": "active" },
+        { "expr": "sum(reactor_netty_connection_provider_pending_connections{application=\"gyeol-backend\"})", "legendFormat": "pending" },
+        { "expr": "sum(reactor_netty_connection_provider_max_connections{application=\"gyeol-backend\"})", "legendFormat": "max" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "B3 — HikariCP 커넥션 풀",
+      "description": "pending > 0 이면 DB 커넥션 대기. acquire 시간이 길면 커넥션을 오래 잡고 있다는 뜻.",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 10 },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [
+        { "expr": "hikaricp_connections_active{application=\"gyeol-backend\"}", "legendFormat": "active" },
+        { "expr": "hikaricp_connections_idle{application=\"gyeol-backend\"}", "legendFormat": "idle" },
+        { "expr": "hikaricp_connections_pending{application=\"gyeol-backend\"}", "legendFormat": "pending" },
+        { "expr": "hikaricp_connections_max{application=\"gyeol-backend\"}", "legendFormat": "max" }
+      ]
+    },
+
+    {
+      "type": "row",
+      "title": "구간 분해 — GCS 업로드 vs ML 호출",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 }
+    },
+    {
+      "type": "timeseries",
+      "title": "구간별 평균 소요시간",
+      "description": "전체 응답시간 중 어디가 느린지 분해. 개선 기여도를 이 패널로 설명한다.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        {
+          "expr": "sum(rate(gcs_upload_seconds_sum{application=\"gyeol-backend\"}[1m])) / clamp_min(sum(rate(gcs_upload_seconds_count{application=\"gyeol-backend\"}[1m])), 0.001)",
+          "legendFormat": "GCS 업로드"
+        },
+        {
+          "expr": "sum(rate(ml_segmentation_seconds_sum{application=\"gyeol-backend\"}[1m])) / clamp_min(sum(rate(ml_segmentation_seconds_count{application=\"gyeol-backend\"}[1m])), 0.001)",
+          "legendFormat": "ML 세그멘테이션"
+        },
+        {
+          "expr": "sum(rate(segmentation_persist_seconds_sum{application=\"gyeol-backend\"}[1m])) / clamp_min(sum(rate(segmentation_persist_seconds_count{application=\"gyeol-backend\"}[1m])), 0.001)",
+          "legendFormat": "DB 저장"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "구간별 p95",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(gcs_upload_seconds_bucket{application=\"gyeol-backend\"}[1m])))",
+          "legendFormat": "GCS 업로드 p95"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(ml_segmentation_seconds_bucket{application=\"gyeol-backend\"}[1m])))",
+          "legendFormat": "ML 세그멘테이션 p95"
+        }
+      ]
+    },
+
+    {
+      "type": "row",
+      "title": "JVM",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 }
+    },
+    {
+      "type": "timeseries",
+      "title": "B6 — Heap 사용량",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 28 },
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "targets": [
+        { "expr": "sum(jvm_memory_used_bytes{application=\"gyeol-backend\", area=\"heap\"})", "legendFormat": "used" },
+        { "expr": "sum(jvm_memory_max_bytes{application=\"gyeol-backend\", area=\"heap\"})", "legendFormat": "max" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "GC pause",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 28 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        {
+          "expr": "sum by (cause) (rate(jvm_gc_pause_seconds_sum{application=\"gyeol-backend\"}[1m]))",
+          "legendFormat": "{{cause}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU 사용률",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 28 },
+      "fieldConfig": { "defaults": { "unit": "percentunit" } },
+      "targets": [
+        { "expr": "process_cpu_usage{application=\"gyeol-backend\"}", "legendFormat": "process" },
+        { "expr": "system_cpu_usage{application=\"gyeol-backend\"}", "legendFormat": "system" }
+      ]
+    }
+  ]
+}

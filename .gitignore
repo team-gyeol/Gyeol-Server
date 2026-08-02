@@ -1,5 +1,15 @@
 HELP.md
 
+.DS_Store
+__pycache__/
+*.pyc
+
+# 부하 테스트 원본 시계열은 수십 MB 라 제외.
+# 요약(summary.json)·병목 스냅샷·실행조건은 비교 근거이므로 커밋한다.
+load-test/results/**/*.raw.json
+# 테스트 이미지는 load-test/README.md 의 스크립트로 재생성 가능
+load-test/data/*.jpg
+
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar

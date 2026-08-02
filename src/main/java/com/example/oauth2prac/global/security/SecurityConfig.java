@@ -41,6 +41,8 @@ public class SecurityConfig {
                                 "/api/token/**",
                                 "/api/oauth/**", // OAuth2 로그인 콜백 API 경로
                                 "/oauth2/**",     // OAuth2 로그인 시작 API 경로
+                                "/actuator/health",
+                                "/actuator/prometheus", // Prometheus 스크랩
                                 "/favicon.ico"
                         ).permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()

@@ -1,0 +1,43 @@
+# 로컬 부하 테스트용 프로파일
+# docker-compose.yml 의 mysql / wiremock 과 짝을 이룬다.
+#   docker compose up -d
+#   ./gradlew bootRun --args='--spring.profiles.active=local'
+spring:
+  datasource:
+    url: jdbc:mysql://${LOCAL_DB_HOST:localhost}:${LOCAL_DB_PORT:3308}/${LOCAL_DB_NAME:gyeol}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&rewriteBatchedStatements=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${LOCAL_DB_USER:gyeol}
+    password: ${LOCAL_DB_PASSWORD:gyeol}
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    # 부하 테스트 중 SQL 로그 I/O 가 측정을 왜곡하므로 반드시 꺼둔다.
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+gcp:
+  storage:
+    bucket: ${GCS_BUCKET_NAME:gyeol-bucket}
+    # 비우면 실제 GCS 사용 (gcloud auth application-default login 필요)
+    emulator-host: ${GCS_EMULATOR_HOST:http://localhost:4443}
+
+fastapi:
+  server:
+    # WireMock ML 스텁 (docker-compose)
+    url: ${FASTAPI_URL:http://localhost:8081}
+
+logging:
+  level:
+    root: INFO
+    # 요청당 INFO 로그가 4줄 이상 찍힌다. 부하 테스트에서는 로그 I/O 자체가
+    # 측정을 왜곡하므로(6분 실행에 900MB+) WARN 으로 낮춘다.
+    # 로깅 비용 자체도 개선 대상이다 - docs/performance-report.md 의 B8 참고.
+    com.example.oauth2prac: WARN
+    org.hibernate.SQL: WARN
+
+management:
+  endpoint:
+    health:
+      show-details: always

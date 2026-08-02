@@ -1,0 +1,18 @@
+{
+  "priority": 10,
+  "request": {
+    "method": "GET",
+    "urlPath": "/"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "status": "ok",
+      "model_loaded": true,
+      "mock": true
+    }
+  }
+}

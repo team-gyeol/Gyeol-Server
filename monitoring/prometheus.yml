@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  # 호스트에서 bootRun 으로 띄운 Spring 애플리케이션
+  - job_name: gyeol-backend
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["host.docker.internal:8080"]
+        labels:
+          application: gyeol-backend
+          env: local
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
