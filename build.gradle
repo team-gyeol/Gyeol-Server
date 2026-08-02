@@ -7,7 +7,14 @@ plugins {
 
 group = 'com.example'
 version = '1.0.0'
-sourceCompatibility = '17'
+
+// 툴체인으로 고정. 머신 기본 JDK 가 21 이어도 17 로 빌드된다.
+// (Boot 3.0.0 이 고정하는 Lombok 1.18.24 는 JDK 21 에서 컴파일이 깨진다)
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
 
 configurations {
     compileOnly {
@@ -26,9 +33,13 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa' // JPA
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-    // implementation 'org.springframework.boot:spring-boot-starter-webflux' // for WebClient
-    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux' // for WebClient
     implementation 'org.springframework.boot:spring-boot-starter-validation' // for Bean Validation
+
+    // 성능 계측 (Actuator + Prometheus 스크랩 엔드포인트)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'org.springframework.boot:spring-boot-starter-aop' // @Timed 지원
 
     // Database Drivers
     runtimeOnly 'com.mysql:mysql-connector-j'
@@ -54,13 +65,6 @@ dependencies {
 
     // Test Dependencies
     testImplementation 'com.h2database:h2' // H2 for in-memory testing
-
-    // WebClient (Spring WebFlux)
-    implementation 'org.springframework.boot:spring-boot-starter-webflux'
-
-    // Lombok
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
 
     // cloud sql
     implementation 'com.google.cloud.sql:mysql-socket-factory-connector-j-8:1.15.0'

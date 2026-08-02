@@ -49,13 +49,7 @@ public class MyPageService {
         SegmentedImage segmentedImage = segmentedImageRepository.findById(imageId)
                 .orElseThrow(() -> new IllegalArgumentException("이미지를 찾을 수 없습니다."));
 
-        return SegmentationImageResponseDto.builder()
-                .segmentedImageUrl(segmentedImage.getImageUrl())
-                .id(segmentedImage.getId())
-                .analysisResult(segmentedImage.getAnalysisResult())
-                .createdAt(segmentedImage.getCreatedAt())
-                .originalImageUrl(segmentedImage.getOriginalImage().getImageUrl())
-                .build();
+        return SegmentationImageResponseDto.from(segmentedImage);
     }
 
     @Transactional

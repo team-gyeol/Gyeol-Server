@@ -1,0 +1,6 @@
+  샘플 37개 (정상 상태)
+  Tomcat busy   평균 47.0 / 최대 52 (max 200)
+  Netty active  평균 15.3 / max 16.0   ← 풀 포화 여부
+  Netty pending 평균 26.6 / 최대 34  ← 커넥션 대기
+  Hikari active 평균 2.3 / max 10.0
+  Hikari pending 평균 0.0 / 최대 0

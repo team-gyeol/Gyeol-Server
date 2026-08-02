@@ -1,0 +1,20 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "urlPath": "/analyze-url"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "analysisResult": "multicopter_body: 1개, propeller: 4개, camera: 1개, leg: 4개",
+      "segmentedImageUrl": "https://storage.googleapis.com/gyeol-bucket/segmented/mock-segmented-image.jpg"
+    }
+  },
+  "metadata": {
+    "comment": "FastAPI Mask R-CNN 서버 스텁. 응답 지연은 mapping 이 아니라 WireMock 전역 설정으로 제어한다 -> load-test/set-mock-delay.sh"
+  }
+}

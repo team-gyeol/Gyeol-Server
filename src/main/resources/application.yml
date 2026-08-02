@@ -1,54 +1,59 @@
-# for commit
-# first commit
 server:
   port: ${PORT:8080}
   forward-headers-strategy: native
+  tomcat:
+    # tomcat_threads_* 메트릭은 MBean 레지스트리가 켜져 있어야 노출된다 (B1 관측에 필수)
+    mbeanregistry:
+      enabled: true
 
 spring:
   config:
     import: optional:file:.env.properties
-  datasource:
-    url: jdbc:mysql:///${DB_NAME}?cloudSqlInstance=${CLOUD_SQL_CONNECTION_NAME}&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: ${DB_PASSWORD}
+  profiles:
+    default: local
+
   servlet:
     multipart:
       max-file-size: 10MB  # 최대 파일 크기
       max-request-size: 10MB  # 최대 요청 크기
 
-
-
   jpa:
-    database-platform: org.hibernate.dialect.MySQLDialect # Deprecated 경고 제거
     open-in-view: false
-    show-sql: true
     hibernate:
-      format_sql: true
       ddl-auto: update
 
-  profiles:
-    include: oauth
+  datasource:
+    # 기본값은 pool-size 10 이다. Tomcat 스레드가 200개인데 커넥션이 10개면
+    # 동시 요청이 늘어날수록 그 차이만큼 커넥션 대기가 생긴다.
+    # (after-b2 측정에서 hikari pending 최대 5, DB 저장 평균 102ms)
+    # 무작정 키우면 DB 쪽 max_connections 를 넘기므로, 인스턴스 한도를 보고 정한다.
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:30}
+      minimum-idle: ${DB_POOL_MIN_IDLE:10}
+      connection-timeout: 10000
+      validation-timeout: 3000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 20000
 
   security:
     oauth2:
       client:
         registration:
           google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
+            client-id: ${GOOGLE_CLIENT_ID:dummy-google-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:dummy-google-client-secret}
             scope:
               - email
               - profile
             redirect-uri: "{baseUrl}/login/oauth2/code/google"
 
-
           kakao:
-            client-id: ${KAKAO_CLIENT_ID}
-            client-secret: ${KAKAO_CLIENT_SECRET}
+            client-id: ${KAKAO_CLIENT_ID:dummy-kakao-client-id}
+            client-secret: ${KAKAO_CLIENT_SECRET:dummy-kakao-client-secret}
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
-            redirect-uri: "https://gyeol-three.vercel.app/callback"
+            redirect-uri: "${FRONTEND_URL:http://localhost:3000/}callback"
             scope:
               - profile_nickname
               - account_email
@@ -60,31 +65,58 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
+# Actuator / Micrometer - 부하 테스트 계측용
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    tags:
+      application: gyeol-backend
+    distribution:
+      # p95/p99 를 Prometheus 에서 계산하려면 히스토그램 버킷이 필요하다.
+      percentiles-histogram:
+        http.server.requests: true
+        gcs.upload: true
+        ml.segmentation: true
+        segmentation.persist: true
+      slo:
+        http.server.requests: 100ms,300ms,500ms,1s,2s,5s,10s,30s
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:ZG9uLXVzZS10aGlzLWluLXByb2R1Y3Rpb24tdGhpcy1pcy1hLWxvY2FsLWRldi1zZWNyZXQta2V5LTEyMzQ1Ng==}
 
 fastapi:
   server:
-    url: ${FASTAPI_CLOUD_RUN_URL}
+    url: ${FASTAPI_CLOUD_RUN_URL:http://localhost:8081}
+
+  # ML 호출 커넥션 풀.
+  # 설정 전에는 Reactor Netty 기본값 max(코어수,8)*2 = 16 이 적용됐고,
+  # 부하 테스트에서 50 동시 요청 중 평균 26.6개가 커넥션을 못 얻고 대기했다.
+  # (baseline: 16.97 RPS / p95 3.15s, ML 고정 지연은 800ms에 불과)
+  #
+  # ML 호출은 CPU 를 쓰지 않고 대부분 대기이므로 코어 수와 무관하게
+  # "동시에 처리하려는 요청 수"에 맞춰야 한다. Tomcat 스레드 수보다
+  # 작으면 그 차이만큼이 그대로 큐 대기가 된다.
+  client:
+    max-connections: ${ML_MAX_CONNECTIONS:100}
+    pending-acquire-max-count: ${ML_PENDING_ACQUIRE_MAX:1000}
+    pending-acquire-timeout-seconds: ${ML_PENDING_ACQUIRE_TIMEOUT:45}
+    response-timeout-seconds: ${ML_RESPONSE_TIMEOUT:60}
+    connect-timeout-millis: ${ML_CONNECT_TIMEOUT:10000}
 
 frontend:
-  url: https://gyeol-three.vercel.app/
-
-
-#cloud:
-#  aws:
-#    s3:
-#      bucket: gyeol-image-bucket
-#    credentials:
-#      access-key: ${AWS_ACCESS_KEY}
-#      secret-key: ${AWS_SECRET_KEY}
-#    region:
-#      static: ap-northeast-2
-#      auto: false
-#    stack:
-#      auto: false
+  url: ${FRONTEND_URL:http://localhost:3000/}
 
 gcp:
   storage:
-    bucket: ${GCS_BUCKET_NAME}
-    project-id: ${PROJECT_ID}
+    bucket: ${GCS_BUCKET_NAME:gyeol-bucket}
+    project-id: ${PROJECT_ID:gyeol-server}
